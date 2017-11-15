@@ -16,6 +16,18 @@
       <h2 id="new-tweets">Waiting for new tweets!</h2>
     </section>
     <section id="tweet-line">
+      <div class="modal user-timeline">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div id="current-timeline"></div>
+            <span class="close">&times;</span>
+          </div>
+        <div class="modal-body">
+        </div>
+        <div class="modal-footer">
+          <div class="trademark">Twittler</div>
+        </div>
+      </div>
     </section>
 
     <script>
@@ -51,9 +63,8 @@
             var tweet = streams.home[num];
             var $tweet = $('<div class="tweet"><p class="tweet-date smalltext">' +
             $.timeago(tweet.created_at) + '</p><p class="tweet-message">' + tweet.message +
-            '</p><p class="tweet-author">&mdash; <a class="user">@' +
+            '</p><p class="tweet-author">&mdash; <a class="username">@' +
             tweet.user + '</a></div>');
-
             $tweet.prependTo($('#tweet-line'));
             $tweet.animate({'opacity': '1'}, 'slow');
           }
@@ -81,6 +92,23 @@
             }, 10000);
           };
 
+          function showUserTimeline(username) {
+            var $username = $('<div class="user-timeline">' + username + '</div>');
+            $username.prependTo($('#current-timeline'));
+            var username = username.slice(1);
+            for (var i in streams.users[username]) {
+              var tweet = streams.users[username][i];
+              var $tweet = $('<div class="tweet"><p class="tweet-date smalltext">' +
+              $.timeago(tweet.created_at) + '</p><p class="tweet-message">' + tweet.message +
+              '</p><p class="tweet-author">&mdash; <a id="username">@' +
+              tweet.user + '</a></div>');
+
+              $tweet.prependTo($('.modal-body'));
+              i++;
+            }
+            this.colorRows();
+          }
+
           return {
             tweetCount: tweetCount,
             getDisplayedTweets: getDisplayedTweets,
@@ -88,6 +116,7 @@
             displayTweet: displayTweet,
             displayTweets: displayTweets,
             checkForTweets: checkForTweets,
+            showUserTimeline: showUserTimeline
           }
         })();
         var originalTweetCount = tweetEvents.tweetCount();
@@ -103,6 +132,16 @@
         tweetEvents.colorRows();
         $('#new-tweets').click(function() {
           tweetEvents.displayTweets();
+        })
+
+        $('.username').click(function(e) {
+          $('.modal').show();
+          tweetEvents.showUserTimeline(this.innerHTML);
+        })
+        $('.close').click(function() {
+          $('.modal').hide();
+          $('.modal-body').empty();
+          $('#current-timeline').empty();
         })
       });
     </script>
