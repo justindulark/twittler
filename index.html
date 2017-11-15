@@ -1,27 +1,110 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset = "UTF-8">
+    <title>Twittler</title>
+    <link rel="stylesheet" href="twittler.css" type="text/css">
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <script src="jquery.timeago.js"></script>
   </head>
   <body>
+    <header>
+      <h1><span class="titlebar"></span> Twittler</h1>
+    </header>
+    <section id="notifications">
+      <h2 id="new-tweets">Waiting for new tweets!</h2>
+    </section>
+    <section id="tweet-line">
+    </section>
+
     <script>
+      window.visitor;
 
-      $(document).ready(function(){
-        var $body = $('body');
-        $body.html('');
+      $(document).ready(function() {
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+        var tweetEvents = (function() {
+
+          function tweetCount() {
+            return streams.home.length;
+          }
+
+          function getDisplayedTweets() {
+            return $('.tweet');
+          }
+
+          function colorRows(tweets) {
+            if(typeof tweets === 'undefined') {
+              var tweets = this.getDisplayedTweets();
+            }
+
+            for (var i = 0; i < tweets.length; i++) {
+              if (i % 2 === 0) {
+                tweets.eq(i).addClass('blue');
+              } else {
+                tweets.eq(i).removeClass('blue');
+              }
+            }
+          }
+
+          function displayTweet(num) {
+            var tweet = streams.home[num];
+            var $tweet = $('<div class="tweet"><p class="tweet-date smalltext">' +
+            $.timeago(tweet.created_at) + '</p><p class="tweet-message">' + tweet.message +
+            '</p><p class="tweet-author">&mdash; <a class="user">@' +
+            tweet.user + '</a></div>');
+
+            $tweet.prependTo($('#tweet-line'));
+            $tweet.animate({'opacity': '1'}, 'slow');
+          }
+
+
+          function displayTweets() {
+            for (var i = originalTweetCount; i < newTweetCount; i++) {
+              displayTweet(i);
+              displayed[i] = true;
+            }
+            originalTweetCount = newTweetCount;
+            this.colorRows();
+            $('#new-tweets').html('Waiting for new tweets!');
+          }
+
+          function checkForTweets() {
+            newTweetCount = tweetCount();
+            if (newTweetCount > originalTweetCount) {
+              $('#new-tweets').html('Click to load ' + (newTweetCount - originalTweetCount) +
+              ' new tweets!');
+            }
+
+            setTimeout(function() {
+              checkForTweets();
+            }, 10000);
+          };
+
+          return {
+            tweetCount: tweetCount,
+            getDisplayedTweets: getDisplayedTweets,
+            colorRows: colorRows,
+            displayTweet: displayTweet,
+            displayTweets: displayTweets,
+            checkForTweets: checkForTweets,
+          }
+        })();
+        var originalTweetCount = tweetEvents.tweetCount();
+        var newTweetCount = 0;
+        var displayed = {};
+        var i = streams.home.length - 1;
+        while (i >= 0) {
+          var newTweet = tweetEvents.displayTweet(i);
+          displayed[i] = true;
+          i--;
         }
-
+        tweetEvents.checkForTweets();
+        tweetEvents.colorRows();
+        $('#new-tweets').click(function() {
+          tweetEvents.displayTweets();
+        })
       });
-
     </script>
   </body>
 </html>
